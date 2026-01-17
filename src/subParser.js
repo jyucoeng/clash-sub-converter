@@ -228,8 +228,24 @@ export class SubParser {
                 password
             };
 
-            // Parse Plugin
-            const pluginStr = params.get('plugin');
+            // Parse Plugin - Handle malformed URIs where & is not encoded in plugin params
+            let pluginStr = params.get('plugin');
+
+            // Try to extract raw plugin string if standard parsing looks truncated (or just always try to be safe)
+            // Match plugin=... until end of string or hash
+            const match = uri.match(/[?&]plugin=([^#]+)/);
+            if (match) {
+                // If the raw match implies the param was NOT properly encoded (contains raw & or ; inside), 
+                // we should prefer the raw match to capture the full string.
+                // However, valid URIs might have other params. 
+                // Given the issue (path truncation), we assume everything after plugin= belongs to plugin 
+                // if it looks like v2ray-plugin args.
+                const rawPlugin = match[1];
+                if (rawPlugin.includes('path=') || rawPlugin.includes('obfs-host=')) {
+                    pluginStr = rawPlugin;
+                }
+            }
+
             if (pluginStr) {
                 const pluginParts = decodeURIComponent(pluginStr).split(';');
                 proxy.plugin = pluginParts[0];
@@ -237,8 +253,10 @@ export class SubParser {
 
                 for (let i = 1; i < pluginParts.length; i++) {
                     const part = pluginParts[i];
-                    if (part.includes('=')) {
-                        const [key, val] = part.split('=');
+                    const equalsIndex = part.indexOf('=');
+                    if (equalsIndex !== -1) {
+                        const key = part.substring(0, equalsIndex);
+                        const val = part.substring(equalsIndex + 1);
                         proxy['plugin-opts'][key] = val;
                     } else {
                         proxy['plugin-opts'][part] = true;
