@@ -90,7 +90,11 @@ export const HTML_TEMPLATE = `<!DOCTYPE html>
       params.set('emoji', document.getElementById('emoji').checked ? 'true' : 'false');
       const exclude = document.getElementById('exclude').value.trim();
       if (exclude) params.set('exclude', exclude);
-      const queryString = params.toString().replace(/%3A/gi, ':').replace(/%2F/gi, '/');
+      const queryString = params.toString()
+        .replace(/%3A/gi, ':')
+        .replace(/%2F/gi, '/')
+        .replace(/%3F/gi, '?')
+        .replace(/%3D/gi, '=');
       const resultUrl = location.origin + '/sub?' + queryString;
       document.getElementById('resultUrl').textContent = resultUrl;
       document.getElementById('resultSection').classList.add('show');
