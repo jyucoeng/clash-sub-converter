@@ -126,7 +126,8 @@ proxies:
                 if (clean['plugin-opts']) {
                     yaml += `    plugin-opts:\n`;
                     for (const [k, v] of Object.entries(clean['plugin-opts'])) {
-                        yaml += `      ${k}: "${v}"\n`;
+                        const val = typeof v === 'boolean' || v === 'true' || v === 'false' ? v : `"${v}"`;
+                        yaml += `      ${k}: ${val}\n`;
                     }
                 }
             }
