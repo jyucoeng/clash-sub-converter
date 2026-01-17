@@ -129,6 +129,8 @@ proxies:
     parseRuleList(text, group) {
         const rules = [];
         const lines = text.split('\n');
+        // Options that are NOT proxy groups
+        const ruleOptions = ['no-resolve', 'src', 'dst'];
 
         for (let line of lines) {
             line = line.trim();
@@ -138,7 +140,7 @@ proxies:
             }
 
             // Check if line already has a policy/group
-            // Format: TYPE,VALUE or TYPE,VALUE,POLICY
+            // Format: TYPE,VALUE or TYPE,VALUE,POLICY or TYPE,VALUE,POLICY,no-resolve
             const parts = line.split(',');
             if (parts.length >= 2) {
                 const ruleType = parts[0].toUpperCase();
@@ -152,12 +154,22 @@ proxies:
                 ];
 
                 if (supportedTypes.includes(ruleType)) {
-                    // If rule already has 3 parts (type, value, policy), use as-is
-                    // Otherwise append our group
-                    if (parts.length >= 3) {
-                        rules.push(line);
-                    } else {
+                    if (parts.length === 2) {
+                        // TYPE,VALUE -> TYPE,VALUE,group
                         rules.push(`${line},${group}`);
+                    } else if (parts.length === 3) {
+                        // Check if third part is an option (like no-resolve) or a policy
+                        const thirdPart = parts[2].trim().toLowerCase();
+                        if (ruleOptions.includes(thirdPart)) {
+                            // TYPE,VALUE,no-resolve -> TYPE,VALUE,group,no-resolve
+                            rules.push(`${parts[0]},${parts[1]},${group},${parts[2]}`);
+                        } else {
+                            // TYPE,VALUE,POLICY -> use as-is
+                            rules.push(line);
+                        }
+                    } else {
+                        // 4+ parts, use as-is
+                        rules.push(line);
                     }
                 }
             }
