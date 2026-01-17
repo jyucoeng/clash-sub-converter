@@ -186,40 +186,79 @@ export class SubParser {
 
     parseShadowsocks(uri) {
         try {
-            let content = uri.replace('ss://', '');
-            let name = 'Shadowsocks';
+            const urlObj = new URL(uri);
+            const params = urlObj.searchParams;
+            let content = uri.replace('ss://', '').split('?')[0]; // Handle legacy/partial parsing
+            let name = decodeURIComponent(urlObj.hash.substring(1)) || 'Shadowsocks';
 
-            const hashIndex = content.indexOf('#');
-            if (hashIndex !== -1) {
-                name = decodeURIComponent(content.substring(hashIndex + 1));
-                content = content.substring(0, hashIndex);
-            }
+            // If URL parsing worked for base, use it; otherwise fallback to manual parsing (for some non-standard formats)
+            let method, password, server, port;
 
             if (content.includes('@')) {
                 const [authPart, serverPart] = content.split('@');
-                let method, password;
-
                 try {
                     const decoded = atob(authPart);
                     [method, password] = decoded.split(':');
                 } catch {
                     [method, password] = authPart.split(':');
                 }
-
-                const [server, port] = serverPart.split(':');
-
-                return { name, type: 'ss', server, port: parseInt(port), cipher: method, password };
+                const [s, p] = serverPart.split(':');
+                server = s;
+                port = p;
+            } else {
+                try {
+                    const decoded = atob(content);
+                    const atIndex = decoded.lastIndexOf('@');
+                    const [authPart, serverPart] = [decoded.substring(0, atIndex), decoded.substring(atIndex + 1)];
+                    [method, password] = authPart.split(':');
+                    const colonIndex = serverPart.lastIndexOf(':');
+                    server = serverPart.substring(0, colonIndex);
+                    port = serverPart.substring(colonIndex + 1);
+                } catch (e) {
+                    return null;
+                }
             }
 
-            const decoded = atob(content);
-            const atIndex = decoded.lastIndexOf('@');
-            const [authPart, serverPart] = [decoded.substring(0, atIndex), decoded.substring(atIndex + 1)];
-            const [method, password] = authPart.split(':');
-            const colonIndex = serverPart.lastIndexOf(':');
-            const server = serverPart.substring(0, colonIndex);
-            const port = serverPart.substring(colonIndex + 1);
+            const proxy = {
+                name,
+                type: 'ss',
+                server,
+                port: parseInt(port),
+                cipher: method,
+                password
+            };
 
-            return { name, type: 'ss', server, port: parseInt(port), cipher: method, password };
+            // Parse Plugin
+            const pluginStr = params.get('plugin');
+            if (pluginStr) {
+                const pluginParts = decodeURIComponent(pluginStr).split(';');
+                proxy.plugin = pluginParts[0];
+                proxy['plugin-opts'] = {};
+
+                for (let i = 1; i < pluginParts.length; i++) {
+                    const part = pluginParts[i];
+                    if (part.includes('=')) {
+                        const [key, val] = part.split('=');
+                        proxy['plugin-opts'][key] = val;
+                    } else {
+                        proxy['plugin-opts'][part] = true;
+                    }
+                }
+
+                // Normalization for v2ray-plugin
+                if (proxy.plugin === 'v2ray-plugin' || proxy.plugin === 'obfs-local') {
+                    if (proxy['plugin-opts'].tls === 'true') proxy['plugin-opts'].tls = true;
+                    if (proxy['plugin-opts'].mux === 'true') proxy['plugin-opts'].mux = true;
+                }
+            }
+
+            // Client Fingerprint
+            const fingerprint = params.get('fingerprint') || params.get('client-fingerprint');
+            if (fingerprint) {
+                proxy['client-fingerprint'] = fingerprint;
+            }
+
+            return proxy;
         } catch (e) {
             return null;
         }
