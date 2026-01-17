@@ -128,7 +128,7 @@ export class SubParser {
                 port: parseInt(url.port) || 443,
                 uuid: url.username,
                 tls: params.get('security') === 'tls' || params.get('security') === 'reality',
-                'skip-cert-verify': true,
+                'skip-cert-verify': false,
                 network: params.get('type') || 'tcp'
             };
 
@@ -143,9 +143,10 @@ export class SubParser {
             }
 
             if (proxy.network === 'ws') {
+                const host = params.get('host') || params.get('sni') || url.hostname;
                 proxy['ws-opts'] = {
                     path: params.get('path') || '/',
-                    headers: params.get('host') ? { Host: params.get('host') } : {}
+                    headers: host ? { Host: host } : {}
                 };
             }
 
