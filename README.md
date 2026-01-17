@@ -1,6 +1,6 @@
 # Clash Subscription Converter
 
-基于 ACL4SSR 规则的 Clash 订阅转换服务 - **Cloudflare Workers 版本**
+基于 ACL4SSR 规则的 Clash 订阅转换服务 - **[cf_Snippets](https://github.com/ryty1/cf_Snippets) 专用配套项目**
 
 ## 🚀 一键部署到 CF Pages
 
@@ -17,15 +17,8 @@
 
 4. **选择 Functions**：Cloudflare 会自动检测 `wrangler.toml`
 
-5. 点击 **Deploy** 即可
+5. 点击 **部署** 即可
 
-### 方式二：Wrangler CLI
-
-```bash
-npm install -g wrangler
-wrangler login
-wrangler deploy
-```
 
 ## API 使用
 
