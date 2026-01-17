@@ -1,6 +1,6 @@
 # Clash Subscription Converter
 
-基于 ACL4SSR 规则的 Clash 订阅转换服务 - **[cf_Snippets](https://github.com/ryty1/cf_Snippets) 专用配套项目**
+基于 ACL4SSR 规则的 Clash 订阅转换服务 - **[cf_Snippets](https://github.com/ryty1/cf_Snippets) 专用配套项目，仅调整适配vless/ss + ws +tls 双协议，其他协议未测试**
 
 ## 🚀 一键部署到 CF Pages
 
