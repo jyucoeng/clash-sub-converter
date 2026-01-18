@@ -248,7 +248,16 @@ export class SubParser {
             }
 
             if (pluginStr) {
-                const pluginParts = decodeURIComponent(pluginStr).split(';');
+                // Double decode for cases like mode%3Dwebsocket or host%3D...
+                let decodedPlugin = pluginStr;
+                try {
+                    decodedPlugin = decodeURIComponent(pluginStr);
+                    // Try second decode in case of double encoding
+                    if (decodedPlugin.includes('%')) {
+                        decodedPlugin = decodeURIComponent(decodedPlugin);
+                    }
+                } catch (e) { }
+                const pluginParts = decodedPlugin.split(';');
                 proxy.plugin = pluginParts[0];
                 proxy['plugin-opts'] = {};
 
