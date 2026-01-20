@@ -3,6 +3,20 @@
  */
 
 export class SubParser {
+    // UTF-8 safe Base64 decode
+    base64DecodeUtf8(str) {
+        try {
+            const binaryStr = atob(str);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+            }
+            return new TextDecoder('utf-8').decode(bytes);
+        } catch (e) {
+            return atob(str); // fallback
+        }
+    }
+
     parse(content) {
         const trimmed = content.trim();
 
@@ -13,7 +27,7 @@ export class SubParser {
 
         // Try Base64
         try {
-            const decoded = atob(trimmed);
+            const decoded = this.base64DecodeUtf8(trimmed);
             if (decoded.includes('://') || decoded.includes('\n')) {
                 return this.parseUriList(decoded);
             }
